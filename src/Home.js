@@ -9,6 +9,7 @@ import { XCircleIcon } from '@heroicons/react/24/solid'
 import { Icon } from '@iconify/react';
 
 import ImagesDialog from './ImagesDialog';
+import toast from 'react-hot-toast';
 
 function Preview({ file, className, onMoveRight, onMoveLeft, onDelete }) {
   return (
@@ -94,9 +95,9 @@ function FormInput({ title, Icon, className, placeholder, PaperAirplaneIcon, onC
 
 export default function Home() {
   const [isListed, setIsListed] = useState(true)
-  const [isImagesDialogOpen, setIsImagesDialogOpen] = useState(true)
-  const [image_urls, setImageUrls] = useState(["https://images.bannerbear.com/direct/EPylBaMArmA1Dnqv3X/requests/000/046/044/119/DdWb1LGkNYNaaZwgQ70OKvRAP/f1b13e7ac58a1a5661c469badb204a4520adb843.png", "https://images.bannerbear.com/direct/EPylBaMArmA1Dnqv3X/requests/000/046/044/123/7gAk4KJj8QmwwpRjzvwqxrD20/d0b806c2e38bd5b62391b297a78ef4362d0b3bb5.png", "https://images.bannerbear.com/direct/EPylBaMArmA1Dnqv3X/requests/000/046/044/120/3Be2PXkVAQ4KKvWK6m78j1oNa/5adacba3523582f37beb5cf7349c09a74146f0fc.png", "https://images.bannerbear.com/direct/EPylBaMArmA1Dnqv3X/requests/000/046/044/122/KZA1qL8r0zlooPMgYepakDXbM/e49574140865d30a33a104439de0b641b8727908.png", "https://images.bannerbear.com/direct/EPylBaMArmA1Dnqv3X/requests/000/046/044/121/nBjKDywPW6Z0071aY4vgVoMrN/cc5dd7f92fe3b94561ae3625269343023c7df424.png"])
-  // const [image_urls, setImageUrls] = useState([])
+  const [isImagesDialogOpen, setIsImagesDialogOpen] = useState(false)
+  // const [image_urls, setImageUrls] = useState(["https://images.bannerbear.com/direct/EPylBaMArmA1Dnqv3X/requests/000/046/044/119/DdWb1LGkNYNaaZwgQ70OKvRAP/f1b13e7ac58a1a5661c469badb204a4520adb843.png", "https://images.bannerbear.com/direct/EPylBaMArmA1Dnqv3X/requests/000/046/044/123/7gAk4KJj8QmwwpRjzvwqxrD20/d0b806c2e38bd5b62391b297a78ef4362d0b3bb5.png", "https://images.bannerbear.com/direct/EPylBaMArmA1Dnqv3X/requests/000/046/044/120/3Be2PXkVAQ4KKvWK6m78j1oNa/5adacba3523582f37beb5cf7349c09a74146f0fc.png", "https://images.bannerbear.com/direct/EPylBaMArmA1Dnqv3X/requests/000/046/044/122/KZA1qL8r0zlooPMgYepakDXbM/e49574140865d30a33a104439de0b641b8727908.png", "https://images.bannerbear.com/direct/EPylBaMArmA1Dnqv3X/requests/000/046/044/121/nBjKDywPW6Z0071aY4vgVoMrN/cc5dd7f92fe3b94561ae3625269343023c7df424.png"])
+  const [image_urls, setImageUrls] = useState([])
   const [loading, setLoading] = useState(false)
   const [plan, setPlan] = useState('For Sale')
   const [propertyAddress, setPropertyAddress] = useState('')
@@ -105,6 +106,7 @@ export default function Home() {
   const [phoneNumber, setPhoneNumber] = useState('')
   const [companyName, setCompanyName] = useState('')
   const [website, setWebsite] = useState('')
+  const [price, setPrice] = useState('')
   const [bedroom, setBedRoom] = useState('')
   const [bathroom, setBathroom] = useState('')
   const [squareFeet, setSquareFeet] = useState('')
@@ -123,6 +125,7 @@ export default function Home() {
     formData.append('companyName', companyName)
     formData.append('website', website)
     if (!isListed) {
+      formData.append('price', price)
       formData.append('bedroom', bedroom)
       formData.append('bathroom', bathroom)
       formData.append('squareFeet', squareFeet)
@@ -130,10 +133,12 @@ export default function Home() {
       images.forEach(image => formData.append('images', image))
     }
     axios.post(process.env.REACT_APP_API_URL + (isListed ? '/listed' : '/notListed'), formData)
-      .then(({ data }) => {
-        setImageUrls(data)
+      .then(({ data: {image_urls, message} }) => {
+        setImageUrls(image_urls)
         setIsImagesDialogOpen(true)
         setErrors({})
+        if (message)
+          toast.success(message)
       }).catch(err => {
         const errorsResponse = err?.response?.data?.error?.details || []
         const errors = {}
@@ -141,6 +146,10 @@ export default function Home() {
           errors[error.context.key] = error.message
         })
         setErrors(errors)
+        console.log('sssss')
+        console.log(err?.response?.data?.message)
+        if (err?.response?.data?.message)
+          toast.error(err?.response?.data?.message)
       }).finally(() => {
         setLoading(false)
       })
@@ -221,10 +230,13 @@ export default function Home() {
           {
             !isListed && (
               <Fragment>
-                <div className='w-full sm:mt-6 sm:grid sm:grid-cols-3 sm:gap-3'>
+                <div className='w-full sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3'>
+                  <FormInput className='w-full mt-6 sm:mt-0 sm:col' value={price} onChange={(e) => setPrice(e.target.value)} error={errors.price} title='Price*' Icon={() => <Icon icon='mdi:dollar' />} placeholder='ex: 9999' />
+                  <FormInput className='w-full mt-6 sm:mt-0 sm:col' value={squareFeet} onChange={(e) => setSquareFeet(e.target.value)} error={errors.squareFeet} title='Square Feet*' Icon={HomeIcon} placeholder='ex: 100' />
+                </div>
+                <div className='w-full sm:mt-6 sm:grid sm:grid-cols-2 sm:gap-3'>
                   <FormInput className='w-full mt-6 sm:mt-0 sm:col' value={bedroom} onChange={(e) => setBedRoom(e.target.value)} error={errors.bedroom} title='Bed Room*' Icon={() => <Icon icon='uil:bed' />} placeholder='ex: 1' />
                   <FormInput className='w-full mt-6 sm:mt-0 sm:col' value={bathroom} onChange={(e) => setBathroom(e.target.value)} error={errors.bathroom} title='Bathroom*' Icon={() => <Icon icon='solar:bath-outline' />} placeholder='Your 0' />
-                  <FormInput className='w-full mt-6 sm:mt-0 sm:col' value={squareFeet} onChange={(e) => setSquareFeet(e.target.value)} error={errors.squareFeet} title='Square Feet*' Icon={HomeIcon} placeholder='ex: 100' />
                 </div>
 
                 <div className='w-full mt-6'>
